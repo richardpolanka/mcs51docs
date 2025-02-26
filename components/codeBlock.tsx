@@ -1,4 +1,3 @@
-// src/components/mcs51/CodeBlock.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface CodeBlockProps {

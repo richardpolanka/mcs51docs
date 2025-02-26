@@ -1,34 +1,32 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CodeBlock } from "../codeBlock";
+import { Pattern } from "@/lib/supabase";
 
-export function PatternsTab() {
+interface PatternsTabProps {
+  patterns: Pattern[];
+}
+
+export function PatternsTab({ patterns }: PatternsTabProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Programovací Vzory</CardTitle>
       </CardHeader>
       <CardContent>
-        <CodeBlock
-          title="1. Zpracování Pole Dat"
-          code={`    MOV R0, #30h      ; Počáteční adresa pole
-    MOV R2, #10      ; Délka pole
-LOOP:
-    MOV A, @R0       ; Načtení prvku
-    ADD A, #5        ; Zpracování (přičtení 5)
-    MOV @R0, A       ; Uložení výsledku
-    INC R0           ; Další prvek
-    DJNZ R2, LOOP    ; Opakovat pro všechny prvky`}
-          description="Vzor pro sekvenční zpracování dat v paměti"
-        />
-        <CodeBlock
-          title="2. Tabulkové Vyhledávání"
-          code={`    MOV DPTR, #TABLE  ; Adresa lookup tabulky
-    MOVC A, @A+DPTR  ; A obsahuje index
-    
-TABLE:
-    DB 00h,01h,03h,07h,0Fh,1Fh,3Fh,7Fh`}
-          description="Vzor pro vyhledávání v konstantní tabulce"
-        />
+        {patterns.length === 0 ? (
+          <p className="text-center text-muted-foreground py-4">
+            Žádné programovací vzory nebyly nalezeny.
+          </p>
+        ) : (
+          patterns.map((pattern) => (
+            <CodeBlock
+              key={pattern.id}
+              title={pattern.title}
+              code={pattern.code}
+              description={pattern.description}
+            />
+          ))
+        )}
       </CardContent>
     </Card>
   );
