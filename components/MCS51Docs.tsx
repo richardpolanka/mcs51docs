@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,13 +23,20 @@ import {
 import { Search, ChevronDown, ChevronUp } from "lucide-react";
 
 export function MCS51Docs() {
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  
   const [addressingModes, setAddressingModes] = useState<AddressingMode[]>([]);
   const [patterns, setPatterns] = useState<Pattern[]>([]);
   const [codeExamples, setCodeExamples] = useState<CodeExample[]>([]);
   const [timing, setTiming] = useState<Timing[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("addressing");
+  const [activeTab, setActiveTab] = useState(
+    tabFromUrl && ["addressing", "patterns", "examples", "timing"].includes(tabFromUrl) 
+      ? tabFromUrl 
+      : "addressing"
+  );
   const [showIntro, setShowIntro] = useState(true);
 
   // Filtered data based on search query
@@ -73,6 +81,30 @@ export function MCS51Docs() {
     };
 
     fetchData();
+  }, []);
+
+  // Listen for hash changes from the header buttons
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash) {
+        const tabName = hash.substring(1); // Remove the # character
+        if (["addressing", "patterns", "examples", "timing"].includes(tabName)) {
+          setActiveTab(tabName);
+        }
+      }
+    };
+
+    // Check for hash on initial load
+    handleHashChange();
+
+    // Add event listener for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+    
+    // Clean up event listener
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
   }, []);
 
   const getResultsCount = () => {
@@ -214,6 +246,7 @@ export function MCS51Docs() {
               <TabsTrigger 
                 value="addressing"
                 className="relative"
+                id="addressing-tab"
               >
                 Adresové Módy
                 {searchQuery && resultsCount.addressing > 0 && (
@@ -225,6 +258,7 @@ export function MCS51Docs() {
               <TabsTrigger 
                 value="patterns"
                 className="relative"
+                id="patterns-tab"
               >
                 Programovací Vzory
                 {searchQuery && resultsCount.patterns > 0 && (
@@ -236,6 +270,7 @@ export function MCS51Docs() {
               <TabsTrigger 
                 value="examples"
                 className="relative"
+                id="examples-tab"
               >
                 Příklady Programů
                 {searchQuery && resultsCount.examples > 0 && (
@@ -244,24 +279,27 @@ export function MCS51Docs() {
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="timing">
+              <TabsTrigger 
+                value="timing"
+                id="timing-tab"
+              >
                 Časování
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="addressing">
+            <TabsContent value="addressing" id="addressing">
               <AddressingTab addressingModes={filteredAddressingModes} />
             </TabsContent>
 
-            <TabsContent value="patterns">
+            <TabsContent value="patterns" id="patterns">
               <PatternsTab patterns={filteredPatterns} />
             </TabsContent>
 
-            <TabsContent value="examples">
+            <TabsContent value="examples" id="examples">
               <ExamplesTab codeExamples={filteredExamples} />
             </TabsContent>
 
-            <TabsContent value="timing">
+            <TabsContent value="timing" id="timing">
               <TimingTab timing={timing} />
             </TabsContent>
           </Tabs>

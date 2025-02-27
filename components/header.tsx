@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Button } from './ui/button';
 import { supabase } from '@/lib/supabase';
-import { Cpu, BookOpen, Code, Clock, User, LogIn, Menu, X } from 'lucide-react';
+import { Cpu, User, LogIn, Menu, X } from 'lucide-react';
 
 export function Header() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -36,13 +37,6 @@ export function Header() {
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  const navItems = [
-    { href: '/#addressing', icon: <Cpu className="h-4 w-4" />, label: 'Adresové Módy' },
-    { href: '/#patterns', icon: <Code className="h-4 w-4" />, label: 'Programovací Vzory' },
-    { href: '/#examples', icon: <BookOpen className="h-4 w-4" />, label: 'Příklady Programů' },
-    { href: '/#timing', icon: <Clock className="h-4 w-4" />, label: 'Časování' }
-  ];
-
   return (
     <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4 py-3">
@@ -52,20 +46,6 @@ export function Header() {
             <Cpu className="h-5 w-5 text-primary" />
             <span className="text-xl font-semibold">MCS-51 Docs</span>
           </Link>
-
-          {/* Desktop navigation */}
-          <nav className="hidden md:flex items-center gap-6">
-            {navItems.map((item) => (
-              <Link 
-                key={item.href} 
-                href={item.href}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-              >
-                {item.icon}
-                {item.label}
-              </Link>
-            ))}
-          </nav>
 
           {/* User actions */}
           <div className="hidden md:flex items-center gap-2">
@@ -120,17 +100,6 @@ export function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t mt-3">
             <nav className="flex flex-col gap-2">
-              {navItems.map((item) => (
-                <Link 
-                  key={item.href} 
-                  href={item.href}
-                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-slate-100"
-                >
-                  {item.icon}
-                  {item.label}
-                </Link>
-              ))}
-              <div className="h-px bg-slate-200 my-2" />
               {!loading && (
                 user ? (
                   <>

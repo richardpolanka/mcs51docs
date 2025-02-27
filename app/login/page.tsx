@@ -35,21 +35,29 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // For demo purposes, use a fixed account
-      const fixedEmail = "admin@mcs51docs.cz";
-      const fixedPassword = "admin123";
+      // Demo account details
+      const demoEmail = "admin@mcs51docs.cz";
+      const demoPassword = "admin123";
       
-      // If demo credentials are used, log in automatically
-      if ((email === "demo" || email === fixedEmail) && (password === "demo" || password === fixedPassword)) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: fixedEmail,
-          password: fixedPassword
-        });
-        
-        if (error) throw error;
+      // If "demo" is used for either field, use the demo credentials
+      const loginEmail = (email === "demo") ? demoEmail : email;
+      const loginPassword = (password === "demo") ? demoPassword : password;
+      
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword
+      });
+      
+      if (signInError) {
+        // If login failed but the user tried "demo", suggest using demo for both fields
+        if (email === "demo" || password === "demo") {
+          setError('Pro demonstrační přístup použijte "demo" jako email i heslo');
+        } else {
+          throw signInError;
+        }
+      } else if (data.user) {
+        // Login successful
         router.push('/dashboard');
-      } else {
-        setError('Pro demonstrační přístup použijte "demo" jako přihlašovací údaje');
       }
     } catch (error: any) {
       setError(error.message || 'Přihlášení selhalo');

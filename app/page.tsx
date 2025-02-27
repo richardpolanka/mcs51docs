@@ -1,3 +1,5 @@
+"use client";
+
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,7 +21,7 @@ export default function Home() {
             Kompletní průvodce architekturou a programováním mikrokontroléru MCS-51 s interaktivními příklady a detailními vysvětleními.
           </p>
           <div className="flex gap-4 flex-wrap">
-            <Button size="lg" className="gap-2">
+            <Button size="lg" className="gap-2" onClick={() => document.getElementById('docs-section')?.scrollIntoView({ behavior: 'smooth' })}>
               <BookOpen size={18} />
               Začít učení
               <ChevronRight size={16} />
@@ -101,31 +103,11 @@ export default function Home() {
           </p>
         </section>
 
-        <div className="mb-8">
+        <div className="mb-8" id="docs-section">
           <h2 className="text-2xl font-bold mb-4">Interaktivní dokumentace</h2>
-          <Tabs defaultValue="addressing" className="bg-white rounded-lg shadow-sm p-1">
-            <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full mb-8 p-1">
-              <TabsTrigger value="addressing" className="flex items-center gap-2">
-                <Cpu className="h-4 w-4" />
-                Adresové Módy
-              </TabsTrigger>
-              <TabsTrigger value="patterns" className="flex items-center gap-2">
-                <Code className="h-4 w-4" />
-                Programovací Vzory
-              </TabsTrigger>
-              <TabsTrigger value="examples" className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
-                Příklady Programů
-              </TabsTrigger>
-              <TabsTrigger value="timing" className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Časování
-              </TabsTrigger>
-            </TabsList>
-            <div className="px-4 pb-4">
-              <MCS51Docs />
-            </div>
-          </Tabs>
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <MCS51Docs />
+          </div>
         </div>
       </div>
     </main>
