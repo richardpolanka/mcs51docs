@@ -64,6 +64,7 @@ export function Header() {
                     size="sm"
                     onClick={async () => {
                       await supabase.auth.signOut();
+                      router.push('/');
                     }}
                   >
                     Odhlásit
@@ -118,6 +119,7 @@ export function Header() {
                       onClick={async () => {
                         await supabase.auth.signOut();
                         setMobileMenuOpen(false);
+                        router.push('/');
                       }}
                     >
                       Odhlásit

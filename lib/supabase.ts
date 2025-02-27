@@ -46,6 +46,44 @@ export type Timing = {
   order: number;
 };
 
+// Function to seed the admin user (you can call this from a setup script or on app initialization)
+export async function seedAdminUser() {
+  try {
+    // Check if the user already exists
+    const { data: existingUsers, error: fetchError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', 'admin');
+
+    if (fetchError) {
+      console.error('Error checking existing user:', fetchError);
+      return { success: false, error: fetchError };
+    }
+
+    // If the user doesn't exist, create it
+    if (!existingUsers || existingUsers.length === 0) {
+      const { data, error } = await supabase.auth.signUp({
+        email: 'admin@mcs51docs.cz',
+        password: 'admin123',
+      });
+
+      if (error) {
+        console.error('Error creating admin user:', error);
+        return { success: false, error };
+      }
+
+      console.log('Admin user created successfully');
+      return { success: true, user: data.user };
+    }
+
+    console.log('Admin user already exists');
+    return { success: true, user: existingUsers[0] };
+  } catch (error) {
+    console.error('Error seeding admin user:', error);
+    return { success: false, error };
+  }
+}
+
 export async function getSections() {
   const { data, error } = await supabase
     .from('sections')

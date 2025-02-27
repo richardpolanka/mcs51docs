@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -17,49 +17,35 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    // Check if user is already logged in
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        router.push('/dashboard');
-      }
-    };
-    
-    checkSession();
-  }, [router]);
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      // Demo account details
-      const demoEmail = "admin@mcs51docs.cz";
-      const demoPassword = "admin123";
+      // Transformace "demo" přihlašovacích údajů
+      const loginEmail = email === 'demo' ? 'admin@mcs51docs.cz' : email;
+      const loginPassword = password === 'demo' ? 'admin123' : password;
       
-      // If "demo" is used for either field, use the demo credentials
-      const loginEmail = (email === "demo") ? demoEmail : email;
-      const loginPassword = (password === "demo") ? demoPassword : password;
-      
+      // Dotaz na Supabase authenticate
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password: loginPassword
       });
       
       if (signInError) {
-        // If login failed but the user tried "demo", suggest using demo for both fields
-        if (email === "demo" || password === "demo") {
+        // Pokud se přihlášení nezdařilo, ale uživatel zadal "demo", navrhnout použití demo pro obě pole
+        if (email === 'demo' || password === 'demo') {
           setError('Pro demonstrační přístup použijte "demo" jako email i heslo');
         } else {
           throw signInError;
         }
       } else if (data.user) {
-        // Login successful
+        // Přihlášení úspěšné, přesměrování na dashboard
         router.push('/dashboard');
       }
     } catch (error: any) {
+      console.error('Login error:', error);
       setError(error.message || 'Přihlášení selhalo');
     } finally {
       setLoading(false);
