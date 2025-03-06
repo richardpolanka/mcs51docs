@@ -45,57 +45,85 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [sections, setSections] = useState<Section[]>([]);
   const [addressingModes, setAddressingModes] = useState<AddressingMode[]>([]);
   const [patterns, setPatterns] = useState<Pattern[]>([]);
   const [codeExamples, setCodeExamples] = useState<CodeExample[]>([]);
   const [timing, setTiming] = useState<Timing[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("addressing-modes");
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
   const router = useRouter();
 
+  // Kontrola autentizace na začátku
   useEffect(() => {
-    // Check if user is authenticated
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
+    const checkAuth = () => {
+      const isLoggedIn = localStorage.getItem('mcs51docs_admin_auth') === 'true';
+      
+      if (!isLoggedIn) {
         router.push('/login');
         return;
       }
       
-      setUser(data.session.user);
-      
-      // Load data
-      try {
-        const [sectionsData, addressingModesData, patternsData, codeExamplesData, timingData] = await Promise.all([
-          getSections(),
-          getAddressingModes(),
-          getPatterns(),
-          getCodeExamples(),
-          getTiming()
-        ]);
-        
-        setSections(sectionsData);
-        setAddressingModes(addressingModesData);
-        setPatterns(patternsData);
-        setCodeExamples(codeExamplesData);
-        setTiming(timingData);
-      } catch (error) {
-        console.error("Error loading data:", error);
-        setNotification({
-          type: 'error',
-          message: 'Načítání dat selhalo. Zkuste obnovit stránku.'
-        });
-      } finally {
-        setLoading(false);
-      }
+      setIsAuthenticated(true);
     };
     
-    checkUser();
+    checkAuth();
   }, [router]);
+
+  // Načtení dat po úspěšné autentizaci
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Načtení dat
+      const loadData = async () => {
+        try {
+          const [sectionsData, addressingModesData, patternsData, codeExamplesData, timingData] = await Promise.all([
+            getSections(),
+            getAddressingModes(),
+            getPatterns(),
+            getCodeExamples(),
+            getTiming()
+          ]);
+          
+          setSections(sectionsData);
+          setAddressingModes(addressingModesData);
+          setPatterns(patternsData);
+          setCodeExamples(codeExamplesData);
+          setTiming(timingData);
+        } catch (error) {
+          console.error("Error loading data:", error);
+          setNotification({
+            type: 'error',
+            message: 'Načítání dat selhalo. Zkuste obnovit stránku.'
+          });
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      loadData();
+    }
+  }, [isAuthenticated]);
+
+  // Pokud uživatel není autentizován, zobrazíme loading screen
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Načítání administrace...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('mcs51docs_admin_auth');
+    document.cookie = "mcs51docs_admin_auth=; path=/; max-age=0"; // odstranění cookie
+    router.push('/login');
+  };
 
   const handleAddAddressingMode = async () => {
     try {
@@ -358,7 +386,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <User className="h-4 w-4" />
-              <span>{user?.email || 'Demo uživatel'}</span>
+              <span>admin</span>
             </div>
             <Button onClick={() => router.push('/')} variant="ghost" size="sm" className="gap-1">
               <Home className="h-4 w-4" />
@@ -368,10 +396,7 @@ export default function DashboardPage() {
               variant="outline" 
               size="sm"
               className="gap-1"
-              onClick={async () => {
-                await supabase.auth.signOut();
-                router.push('/login');
-              }}
+              onClick={handleLogout}
             >
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Odhlásit se</span>

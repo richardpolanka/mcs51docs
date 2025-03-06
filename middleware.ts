@@ -1,41 +1,29 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 
 export async function middleware(request: NextRequest) {
-  // Vytvoření Supabase klienta upraveného pro middleware
-  const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req: request, res });
-  
-  // Ověření session
-  const { data: { session } } = await supabase.auth.getSession();
-  
   // Získání aktuální cesty
   const path = request.nextUrl.pathname;
+  
+  // Získání stavu přihlášení z cookies
+  const isLoggedIn = request.cookies.get('mcs51docs_admin_auth')?.value === 'true';
   
   // Definování chráněných cest (vyžadují přihlášení)
   const isProtectedPath = path.startsWith('/dashboard');
   
-  // Veřejné cesty - přístup povolen
-  const isPublicPath = 
-    path === '/login' || 
-    path === '/register' || 
-    path === '/' || 
-    path.startsWith('/api/auth');
-
-  // Pokud je to chráněná cesta a není session, přesměrování na přihlášení
-  if (isProtectedPath && !session) {
+  // Pokud je to chráněná cesta a uživatel není přihlášen, přesměrování na přihlášení
+  if (isProtectedPath && !isLoggedIn) {
     const redirectUrl = new URL('/login', request.url);
     return NextResponse.redirect(redirectUrl);
   }
 
   // Pokud je uživatel již přihlášen a snaží se dostat na přihlašovací stránku, přesměrovat na dashboard
-  if (session && path === '/login') {
+  if (isLoggedIn && path === '/login') {
     const redirectUrl = new URL('/dashboard', request.url);
     return NextResponse.redirect(redirectUrl);
   }
 
-  return res;
+  return NextResponse.next();
 }
 
 // Nastavení cest, na které se middleware vztahuje

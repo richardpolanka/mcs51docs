@@ -53,7 +53,7 @@ export async function seedAdminUser() {
     const { data: existingUsers, error: fetchError } = await supabase
       .from('users')
       .select('*')
-      .eq('email', 'admin');
+      .eq('email', 'admin@mcs51docs.cz');
 
     if (fetchError) {
       console.error('Error checking existing user:', fetchError);

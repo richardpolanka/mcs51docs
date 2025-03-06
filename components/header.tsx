@@ -4,38 +4,52 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from './ui/button';
-import { supabase } from '@/lib/supabase';
 import { Cpu, User, LogIn, Menu, X } from 'lucide-react';
 
 export function Header() {
-  const [user, setUser] = useState<any>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getSession();
-      setUser(data.session?.user || null);
+    // Kontrola přihlášení z localStorage
+    const checkAuth = () => {
+      const auth = localStorage.getItem('mcs51docs_admin_auth') === 'true';
+      setIsLoggedIn(auth);
       setLoading(false);
     };
 
-    checkUser();
+    checkAuth();
+    
+    // Nastavení cookie při změně localStorage
+    if (isLoggedIn) {
+      document.cookie = "mcs51docs_admin_auth=true; path=/; max-age=86400"; // platnost 24 hodin
+    }
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
+    // Naslouchání na události localStorage
+    const handleStorageChange = () => {
+      checkAuth();
     };
-  }, []);
 
-  // Close mobile menu when pathname changes
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [isLoggedIn]);
+
+  // Zavření mobilního menu při změně cesty
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('mcs51docs_admin_auth');
+    document.cookie = "mcs51docs_admin_auth=; path=/; max-age=0"; // odstranění cookie
+    setIsLoggedIn(false);
+    router.push('/');
+  };
 
   return (
     <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
@@ -50,11 +64,11 @@ export function Header() {
           {/* User actions */}
           <div className="hidden md:flex items-center gap-2">
             {!loading && (
-              user ? (
+              isLoggedIn ? (
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <User className="h-4 w-4" />
-                    <span className="max-w-[120px] truncate">{user.email}</span>
+                    <span className="max-w-[120px] truncate">admin</span>
                   </div>
                   <Link href="/dashboard" passHref>
                     <Button variant="ghost" size="sm">Správa</Button>
@@ -62,10 +76,7 @@ export function Header() {
                   <Button 
                     variant="outline"
                     size="sm"
-                    onClick={async () => {
-                      await supabase.auth.signOut();
-                      router.push('/');
-                    }}
+                    onClick={handleLogout}
                   >
                     Odhlásit
                   </Button>
@@ -102,11 +113,11 @@ export function Header() {
           <div className="md:hidden py-4 border-t mt-3">
             <nav className="flex flex-col gap-2">
               {!loading && (
-                user ? (
+                isLoggedIn ? (
                   <>
                     <div className="px-3 py-2 text-sm text-muted-foreground flex items-center gap-2">
                       <User className="h-4 w-4" />
-                      <span className="truncate">{user.email}</span>
+                      <span className="truncate">admin</span>
                     </div>
                     <Link 
                       href="/dashboard" 
@@ -116,11 +127,7 @@ export function Header() {
                     </Link>
                     <button
                       className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-slate-100 text-left w-full"
-                      onClick={async () => {
-                        await supabase.auth.signOut();
-                        setMobileMenuOpen(false);
-                        router.push('/');
-                      }}
+                      onClick={handleLogout}
                     >
                       Odhlásit
                     </button>
